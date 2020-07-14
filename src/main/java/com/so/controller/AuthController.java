@@ -1,9 +1,11 @@
 package com.so.controller;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -20,8 +22,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.so.common.BaseController;
+import com.so.common.CookieUtils;
 import com.so.common.Utils;
 import com.so.exception.AppException;
 import com.so.jpa.entity.AuthProvider;
@@ -48,8 +51,8 @@ import com.so.service.UserService;
 
 @Controller
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000",
-		"http://127.0.0.1:3001" })
+//@CrossOrigin(origins = { "http://localhost:8888", "http://localhost:3001", "http://127.0.0.1:3000",
+//		"http://127.0.0.1:3001" })
 public class AuthController extends BaseController {
 
 	protected Logger logger = LoggerFactory.getLogger(AuthController.class);
@@ -70,7 +73,7 @@ public class AuthController extends BaseController {
 	private EmailSenderService emailSenderService;
 
 	@PostMapping("/signin")
-	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+	public ResponseEntity<?> authenticateUser(@Valid @ModelAttribute LoginRequest loginRequest,HttpServletResponse response) throws IOException {
 
 		if (userService.isUserDisabled(loginRequest.getUsernameOrEmail())) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -80,6 +83,7 @@ public class AuthController extends BaseController {
 				new UsernamePasswordAuthenticationToken(loginRequest.getUsernameOrEmail(), loginRequest.getPassword()));
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = tokenProvider.generateToken(authentication);
+		CookieUtils.addCookie(response, "jwt",jwt, 180);
 		return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
 	}
 

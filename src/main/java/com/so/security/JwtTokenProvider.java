@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.so.common.CookieUtils;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -80,6 +82,9 @@ public class JwtTokenProvider {
 
     public String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
+        if(StringUtils.isEmpty(bearerToken)) {
+        	bearerToken = "Bearer "+CookieUtils.getValue(request, "jwt");
+        }
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7, bearerToken.length());
         }
