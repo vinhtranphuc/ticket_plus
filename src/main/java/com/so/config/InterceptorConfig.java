@@ -9,6 +9,7 @@ import com.so.interceptor.Interceptor;
 
 @Configuration
 public class InterceptorConfig extends WebMvcConfigurationSupport {
+
 	@Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new Interceptor());

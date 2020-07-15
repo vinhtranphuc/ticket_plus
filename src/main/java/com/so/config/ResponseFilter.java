@@ -1,10 +1,9 @@
 package com.so.config;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -36,7 +35,7 @@ public class ResponseFilter<T> implements ResponseBodyAdvice<Object>  {
 	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
 		return true;
 	}
-	 
+
 	@Override
 	public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
 			Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request,
@@ -51,15 +50,11 @@ public class ResponseFilter<T> implements ResponseBodyAdvice<Object>  {
 		ServletServerHttpRequest sshrq = (ServletServerHttpRequest) request;
 		HttpServletRequest hsrq = sshrq.getServletRequest();
 		String oldJwt = tokenProvider.getJwtFromRequest(hsrq);
-		String newJwt = tokenProvider.generateToken(SecurityContextHolder.getContext().getAuthentication());
-
+		String newJwt = "";
+		
 		if(tokenProvider.validateToken(oldJwt)) {
-			try {
-				CookieUtils.addCookie(hsrs, "jwt", "Bearer "+newJwt, 180);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			newJwt = tokenProvider.generateToken(SecurityContextHolder.getContext().getAuthentication());
+			CookieUtils.addCookie(hsrs, "jwt", "Bearer "+newJwt, 180);
 		}
 
 		if(status == HttpStatus.INTERNAL_SERVER_ERROR.value() && body == null) {
@@ -67,17 +62,15 @@ public class ResponseFilter<T> implements ResponseBodyAdvice<Object>  {
 			resBody.setMessage("An server error has occurred");
 			return resBody;
 		}
-
-		if(body==null || body.getClass() != Response.class)
-			return body;
 		
-		if(status == HttpStatus.OK.value()) {
-			//save to Response
-			((Response) body).setAccessToken(newJwt);
+		if(body != null && body.getClass() == Response.class) {
+			if(StringUtils.isNotEmpty(newJwt) && status == HttpStatus.OK.value()) {
+				//save to Response
+				((Response) body).setAccessToken(newJwt);
+			}
+			// set status to body
+			((Response) body).setStatus(hsrs.getStatus());
 		}
-
-		// set status to body
-		((Response) body).setStatus(hsrs.getStatus());
 
 		return body;
 	}

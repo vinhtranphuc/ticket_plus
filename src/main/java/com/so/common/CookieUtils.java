@@ -1,7 +1,5 @@
 package com.so.common;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -14,8 +12,8 @@ import org.springframework.web.util.WebUtils;
 
 public class CookieUtils {
 
-	public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) throws IOException {
-		Cookie cookie = new Cookie(name, URLEncoder.encode( value, "UTF-8" ));
+	public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+		Cookie cookie = new Cookie(name, value);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
 		cookie.setMaxAge(maxAge);

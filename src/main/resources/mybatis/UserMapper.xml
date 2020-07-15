@@ -53,7 +53,7 @@
 		FROM USERS A
 		WHERE A.USER_ID = #{user_id}
 	</select>
-	
+
 	<delete id="deletePostsAuthorsByPostId">
 		DELETE FROM POSTS_AUTHORS
 		WHERE POST_ID = #{post_id}
